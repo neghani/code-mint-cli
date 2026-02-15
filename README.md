@@ -36,16 +36,22 @@ Supported AI tools:
 
 ## Installation
 
-### Option 0: One-line installer (latest macOS/Linux)
+### Option 0: One-line installer (works even before releases)
 
 ```bash
-curl -fsSL https://github.com/codemint/codemint-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/codemint/codemint-cli/main/scripts/install.sh | sh
 ```
 
 For a fork or custom repo:
 
 ```bash
-curl -fsSL https://github.com/neghani/code-mint-cli/releases/latest/download/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/scripts/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
+```
+
+If you already publish GitHub Releases with an `install.sh` asset, this also works:
+
+```bash
+curl -fsSL https://github.com/codemint/codemint-cli/releases/latest/download/install.sh | sh
 ```
 
 ### Option 1: Download and install prebuilt packages

@@ -13,6 +13,93 @@ need_cmd() {
   fi
 }
 
+install_binary() {
+  src_path="$1"
+  dest_path="${INSTALL_DIR}/${BINARY}"
+  if [ -w "$INSTALL_DIR" ]; then
+    install -m 0755 "$src_path" "$dest_path"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo install -m 0755 "$src_path" "$dest_path"
+  else
+    echo "cannot write to ${INSTALL_DIR}; run as root or set CODEMINT_INSTALL_DIR" >&2
+    exit 1
+  fi
+  echo "Installed ${BINARY} to ${dest_path}"
+  "$dest_path" version || true
+}
+
+resolve_latest_tag() {
+  curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null \
+    | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -n 1
+}
+
+download_release_archive() {
+  tag="$1"
+  archive_path="$2"
+  sums_path="$3"
+
+  version_no_v="${tag#v}"
+  asset="${BINARY}_${version_no_v}_${OS}_${ARCH}.tar.gz"
+  base_url="https://github.com/${REPO}/releases/download/${tag}"
+
+  echo "Downloading ${asset} from ${REPO} (${tag})"
+  if ! curl -fL "${base_url}/${asset}" -o "$archive_path"; then
+    return 1
+  fi
+
+  if curl -fsSL "${base_url}/SHA256SUMS" -o "$sums_path"; then
+    expected="$(grep " ${asset}\$" "$sums_path" | awk '{print $1}' | head -n 1 || true)"
+    if [ -n "$expected" ]; then
+      actual=""
+      if command -v sha256sum >/dev/null 2>&1; then
+        actual="$(sha256sum "$archive_path" | awk '{print $1}')"
+      elif command -v shasum >/dev/null 2>&1; then
+        actual="$(shasum -a 256 "$archive_path" | awk '{print $1}')"
+      fi
+      if [ -n "$actual" ] && [ "$actual" != "$expected" ]; then
+        echo "checksum mismatch for ${asset}" >&2
+        echo "expected: $expected" >&2
+        echo "actual:   $actual" >&2
+        exit 1
+      fi
+    fi
+  fi
+
+  tar -xzf "$archive_path" -C "$TMP_DIR"
+  if [ ! -f "${TMP_DIR}/${BINARY}" ]; then
+    echo "archive did not contain expected binary: ${BINARY}" >&2
+    exit 1
+  fi
+  install_binary "${TMP_DIR}/${BINARY}"
+  return 0
+}
+
+build_from_source() {
+  ref="$1"
+  need_cmd go
+  need_cmd find
+
+  if [ "$ref" = "main" ]; then
+    src_url="https://codeload.github.com/${REPO}/tar.gz/refs/heads/main"
+  else
+    src_url="https://codeload.github.com/${REPO}/tar.gz/refs/tags/${ref}"
+  fi
+
+  echo "Building ${BINARY} from source (${REPO}@${ref})"
+  curl -fL "$src_url" -o "${TMP_DIR}/source.tar.gz"
+  tar -xzf "${TMP_DIR}/source.tar.gz" -C "$TMP_DIR"
+
+  src_root="$(find "$TMP_DIR" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+  if [ -z "$src_root" ] || [ ! -f "${src_root}/go.mod" ]; then
+    echo "failed to extract source archive for ${REPO}@${ref}" >&2
+    exit 1
+  fi
+
+  (cd "$src_root" && go build -o "${TMP_DIR}/${BINARY}" .)
+  install_binary "${TMP_DIR}/${BINARY}"
+}
+
 need_cmd curl
 need_cmd tar
 need_cmd uname
@@ -38,68 +125,37 @@ case "$ARCH" in
     ;;
 esac
 
-if [ "$VERSION" = "latest" ]; then
-  TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-  if [ -z "$TAG" ]; then
-    echo "failed to resolve latest release tag from GitHub API for ${REPO}" >&2
-    exit 1
-  fi
-else
-  case "$VERSION" in
-    v*) TAG="$VERSION" ;;
-    *) TAG="v$VERSION" ;;
-  esac
-fi
-
-VERSION_NO_V="${TAG#v}"
-ASSET="${BINARY}_${VERSION_NO_V}_${OS}_${ARCH}.tar.gz"
-BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
-
 TMP_DIR="$(mktemp -d)"
 cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT INT TERM
 
-ARCHIVE_PATH="${TMP_DIR}/${ASSET}"
+ARCHIVE_PATH="${TMP_DIR}/release.tar.gz"
 SUMS_PATH="${TMP_DIR}/SHA256SUMS"
 
-echo "Downloading ${ASSET} from ${REPO} (${TAG})"
-curl -fL "${BASE_URL}/${ASSET}" -o "$ARCHIVE_PATH"
-
-if curl -fsSL "${BASE_URL}/SHA256SUMS" -o "$SUMS_PATH"; then
-  EXPECTED="$(grep " ${ASSET}\$" "$SUMS_PATH" | awk '{print $1}' | head -n 1 || true)"
-  if [ -n "$EXPECTED" ]; then
-    ACTUAL=""
-    if command -v sha256sum >/dev/null 2>&1; then
-      ACTUAL="$(sha256sum "$ARCHIVE_PATH" | awk '{print $1}')"
-    elif command -v shasum >/dev/null 2>&1; then
-      ACTUAL="$(shasum -a 256 "$ARCHIVE_PATH" | awk '{print $1}')"
+if [ "$VERSION" = "latest" ]; then
+  tag="$(resolve_latest_tag || true)"
+  if [ -n "$tag" ]; then
+    if download_release_archive "$tag" "$ARCHIVE_PATH" "$SUMS_PATH"; then
+      exit 0
     fi
-    if [ -n "$ACTUAL" ] && [ "$ACTUAL" != "$EXPECTED" ]; then
-      echo "checksum mismatch for ${ASSET}" >&2
-      echo "expected: $EXPECTED" >&2
-      echo "actual:   $ACTUAL" >&2
-      exit 1
-    fi
+    echo "Latest release assets not available; falling back to source build from main" >&2
+  else
+    echo "No published release found for ${REPO}; falling back to source build from main" >&2
   fi
+  build_from_source "main"
+  exit 0
 fi
 
-tar -xzf "$ARCHIVE_PATH" -C "$TMP_DIR"
-if [ ! -f "${TMP_DIR}/${BINARY}" ]; then
-  echo "archive did not contain expected binary: ${BINARY}" >&2
-  exit 1
+case "$VERSION" in
+  v*) TAG="$VERSION" ;;
+  *) TAG="v$VERSION" ;;
+esac
+
+if download_release_archive "$TAG" "$ARCHIVE_PATH" "$SUMS_PATH"; then
+  exit 0
 fi
 
-DEST="${INSTALL_DIR}/${BINARY}"
-if [ -w "$INSTALL_DIR" ]; then
-  install -m 0755 "${TMP_DIR}/${BINARY}" "$DEST"
-elif command -v sudo >/dev/null 2>&1; then
-  sudo install -m 0755 "${TMP_DIR}/${BINARY}" "$DEST"
-else
-  echo "cannot write to ${INSTALL_DIR}; run as root or set CODEMINT_INSTALL_DIR" >&2
-  exit 1
-fi
-
-echo "Installed ${BINARY} to ${DEST}"
-"$DEST" version || true
+echo "Release asset not found for ${TAG}; attempting source build from tag" >&2
+build_from_source "$TAG"
