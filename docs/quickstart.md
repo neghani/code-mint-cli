@@ -69,7 +69,7 @@ codemint version
 
 ## Configure
 
-`codemint --base-url https://app.codemint.app auth login`
+`codemint --base-url https://codemint.app auth login`
 
 Environment overrides:
 - `CODEMINT_BASE_URL`

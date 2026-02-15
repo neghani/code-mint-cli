@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-const defaultBaseURL = "https://app.codemint.app"
+const defaultBaseURL = "https://codemint.app"
 
 type Config struct {
 	BaseURL string `json:"base_url"`

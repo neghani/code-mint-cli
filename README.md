@@ -139,7 +139,7 @@ codemint add @rule/<slug>
 For non-default environments:
 
 ```bash
-codemint --base-url https://app.codemint.app auth login
+codemint --base-url https://codemint.app auth login
 ```
 
 ## Run Locally
@@ -301,7 +301,7 @@ For testing multiple platforms/environments, pair base URLs with profiles:
 
 ```bash
 codemint --base-url https://staging.codemint.app --profile staging auth login
-codemint --base-url https://app.codemint.app --profile prod auth login
+codemint --base-url https://codemint.app --profile prod auth login
 
 codemint --profile staging auth whoami
 codemint --profile prod auth whoami
