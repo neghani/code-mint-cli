@@ -6,14 +6,18 @@ Download a package from GitHub Releases and install it.
 
 ### Fast install (works even before releases)
 
+Either URL works (root or `scripts/`):
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/codemint/codemint-cli/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/install.sh | sh
+# or
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/scripts/install.sh | sh
 ```
 
-If you publish from your own repo/fork, use your fork's raw URL:
+For a different fork, set `CODEMINT_REPO`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/scripts/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
 ```
 
 ### Linux amd64

@@ -39,13 +39,16 @@ Supported AI tools:
 ### Option 0: One-line installer (works even before releases)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/codemint/codemint-cli/main/scripts/install.sh | sh
+# Either URL works (root or scripts/):
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/install.sh | sh
+# or
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/scripts/install.sh | sh
 ```
 
-For a fork or custom repo:
+For the upstream repo or a different fork, set `CODEMINT_REPO`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/scripts/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
+curl -fsSL https://raw.githubusercontent.com/neghani/code-mint-cli/main/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
 ```
 
 If you already publish GitHub Releases with an `install.sh` asset, this also works:
