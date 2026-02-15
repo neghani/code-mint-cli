@@ -29,6 +29,17 @@ install_binary() {
 }
 
 resolve_latest_tag() {
+  # Prefer GitHub release redirect (avoids API rate-limit issues for unauthenticated users).
+  tag="$(curl -fsSI "https://github.com/${REPO}/releases/latest" 2>/dev/null \
+    | awk 'tolower($1)=="location:" {print $2}' \
+    | tr -d '\r' \
+    | sed -n 's#^.*/releases/tag/\(v[^/[:space:]]*\).*$#\1#p' \
+    | head -n 1)"
+  if [ -n "$tag" ]; then
+    echo "$tag"
+    return 0
+  fi
+
   curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null \
     | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
     | head -n 1
