@@ -7,6 +7,15 @@ import (
 	"path/filepath"
 )
 
+// IsEmptyDir returns true if dir exists and has no entries (or only . and ..).
+func IsEmptyDir(dir string) (bool, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false, err
+	}
+	return len(entries) == 0, nil
+}
+
 func EnsureDir(path string) error {
 	return os.MkdirAll(path, 0o755)
 }

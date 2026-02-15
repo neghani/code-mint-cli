@@ -12,10 +12,12 @@ Distribution order:
 
 ## Target Repository Layout
 
-Create this structure under `/Users/ganeshkumar/Projects/code-mint-ai/cli`:
+This CLI lives in its **own repo** ([neghani/code-mint-cli](https://github.com/neghani/code-mint-cli)), not under the web app. The app repo is **code-mint-ai** (backend, API, `/cli-auth`, install script served at `/cli/install.sh`). Coordination: see the **code-mint-ai** app repo’s `docs/REPO_COORDINATION.md`.
+
+Structure in this repo:
 
 ```text
-cli/
+(code-mint-ali-cli)/
   cmd/
     root.go
     version.go
@@ -198,10 +200,16 @@ cli/
 ### Exit Criteria (M4)
 - [ ] Install/upgrade works from GitHub, Homebrew, and winget.
 
+## Coordination with code-mint-ai (backend)
+
+- Install script **source of truth** is this repo’s `scripts/install.sh` (and root `install.sh`). The app copies it to `scripts/install-cli.sh` and serves at `/cli/install.sh`; keep in sync when changing install behavior.
+- Backend gaps and API contracts: see app repo’s **docs/CLI_GAPS.md** and **docs/cli-integration.md**.
+- Feature ideas and roadmap: **FEATURES_ROADMAP.md** (this repo).
+
 ## Backend Work Required Before CLI Freeze
 
 ## Mandatory
-- [ ] Fix/confirm login `next` redirect continuity for `/cli-auth`.
+- [ ] Fix/confirm login `next` redirect continuity for `/cli-auth` (in app repo).
 - [ ] Keep `POST /api/auth/cli-token` stable.
 
 ## Recommended for v1

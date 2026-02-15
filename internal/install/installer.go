@@ -37,12 +37,21 @@ func (m *Manager) ItemDir(tool, itemType string) string {
 		}
 		return filepath.Join(m.Root, ".clinerules")
 	case tooling.ToolWindsurf:
+		if itemType == "skill" {
+			return filepath.Join(m.Root, ".windsurf", "skills")
+		}
 		return filepath.Join(m.Root, ".windsurf", "rules")
 	case tooling.ToolContinue:
+		if itemType == "skill" {
+			return filepath.Join(m.Root, ".continue", "skills")
+		}
 		return filepath.Join(m.Root, ".continue", "rules")
 	case tooling.ToolCopilot:
 		return filepath.Join(m.Root, ".github", "instructions")
 	case tooling.ToolClaude:
+		if itemType == "skill" {
+			return filepath.Join(m.Root, ".claude", "skills")
+		}
 		return filepath.Join(m.Root, ".claude", "rules")
 	case tooling.ToolCodex:
 		return filepath.Join(m.Root, ".codex", itemType+"s")
@@ -115,6 +124,12 @@ func (m *Manager) RemovePath(path string) (string, error) {
 	err := os.Remove(path)
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
+	}
+	dir := filepath.Dir(path)
+	if dir != "" && dir != "." {
+		if empty, _ := util.IsEmptyDir(dir); empty {
+			_ = os.Remove(dir)
+		}
 	}
 	return path, nil
 }
