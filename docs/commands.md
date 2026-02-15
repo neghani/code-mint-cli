@@ -1,5 +1,10 @@
 # Commands
 
+## Recommended first command for migration
+
+- `codemint suggest --path . --type rule`
+- `codemint suggest --path . --type skill`
+
 ## Global flags
 
 - `--json`
@@ -21,3 +26,13 @@
 ## Org
 
 - `codemint org list`
+
+## Migration and install lifecycle
+
+- `codemint scan [path]`
+- `codemint suggest [--path <dir>] [--type rule|skill]`
+- `codemint tool set <name>`
+- `codemint add @rule/<slug>|@skill/<slug> [--tool <name>] [--dry-run]`
+- `codemint list [--installed]`
+- `codemint remove @rule/<slug>|@skill/<slug>`
+- `codemint sync [--dry-run]`

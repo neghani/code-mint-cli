@@ -42,6 +42,8 @@ Release packages:
 
 - `codemint_<version>_darwin_arm64.tar.gz`
 - `codemint_<version>_darwin_amd64.tar.gz`
+- `codemint_<version>_linux_arm64.tar.gz`
+- `codemint_<version>_linux_amd64.tar.gz`
 - `codemint_<version>_windows_amd64.zip`
 - `SHA256SUMS`
 
@@ -51,9 +53,18 @@ Download and install on macOS/Linux:
 # set the version you want
 VERSION="0.1.0"
 
-# choose ONE package that matches your machine
+# detect platform
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64) ARCH="amd64" ;;
+  arm64|aarch64) ARCH="arm64" ;;
+  *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+esac
+
+# download package that matches your machine
 curl -fL -o codemint.tar.gz \
-  "https://github.com/codemint/codemint-cli/releases/download/v${VERSION}/codemint_${VERSION}_darwin_arm64.tar.gz"
+  "https://github.com/codemint/codemint-cli/releases/download/v${VERSION}/codemint_${VERSION}_${OS}_${ARCH}.tar.gz"
 
 # extract and install
 tar -xzf codemint.tar.gz
@@ -97,14 +108,14 @@ make build
 # 1) authenticate
 codemint auth login
 
-# 2) verify identity
-codemint auth whoami
+# 2) set default AI tool once per repo
+codemint tool set cursor
 
-# 3) search items
-codemint items search --q "widget"
+# 3) get migration recommendations for this repo
+codemint suggest --path . --type rule
 
-# 4) list organizations
-codemint org list
+# 4) install a suggested rule (replace slug from output)
+codemint add @rule/<slug>
 ```
 
 For non-default environments:
@@ -170,6 +181,17 @@ Scan a repository and get recommendations:
 ```bash
 codemint scan .
 codemint suggest --path . --type rule
+```
+
+Suggested migration path after installation:
+
+```bash
+codemint auth login
+codemint tool set cursor
+codemint suggest --path . --type rule
+codemint suggest --path . --type skill
+codemint add @rule/<slug>
+codemint add @skill/<slug>
 ```
 
 Set default tool and install a rule/skill:

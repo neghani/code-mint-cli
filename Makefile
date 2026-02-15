@@ -21,6 +21,11 @@ release-dry-run:
 	tar -czf dist/$(BINARY)_$(VERSION)_darwin_arm64.tar.gz -C dist $(BINARY)
 	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(BINARY)
 	tar -czf dist/$(BINARY)_$(VERSION)_darwin_amd64.tar.gz -C dist $(BINARY)
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(BINARY)
+	tar -czf dist/$(BINARY)_$(VERSION)_linux_amd64.tar.gz -C dist $(BINARY)
+	GOOS=linux GOARCH=arm64 go build -ldflags "$(LDFLAGS)" -o dist/$(BINARY)
+	tar -czf dist/$(BINARY)_$(VERSION)_linux_arm64.tar.gz -C dist $(BINARY)
 	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(BINARY).exe
 	(cd dist && zip $(BINARY)_$(VERSION)_windows_amd64.zip $(BINARY).exe)
-	./scripts/checksums.sh dist
+	rm -f dist/$(BINARY) dist/$(BINARY).exe
+	./scripts/checksums.sh dist "$(BINARY)_$(VERSION)_*"
