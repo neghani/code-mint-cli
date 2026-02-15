@@ -12,6 +12,28 @@ It supports authentication, catalog search, repository-aware recommendations, an
 - Tool-aware installs with per-repo default AI tool settings
 - Scriptable output with `--json`
 
+## What The CLI Can Do
+
+| Capability | Commands | Notes |
+|---|---|---|
+| Authenticate | `auth login`, `auth whoami`, `auth logout` | Browser-based login with secure token storage |
+| Search platform data | `items search`, `org list` | Supports pagination and filtering (`--type`, `--tags`, `--page`, `--limit`) |
+| Analyze repository stack | `scan [path]` | Detects technologies and confidence scores |
+| Recommend catalog content | `suggest [--path <dir>] [--type rule\|skill]` | Uses scan tags to suggest matching rules/skills |
+| Install content | `add @rule/<slug>\|@skill/<slug> [--tool <name>] [--dry-run]` | Installs to tool-specific paths (for example `.cursor/rules`) |
+| Manage installs | `list [--installed]`, `remove <ref>`, `sync [--dry-run]` | Tracks local installs and updates from catalog |
+| Configure default AI tool | `tool set <name>`, `tool current`, `tool list` | Default tool is stored per repository |
+| Diagnose setup | `doctor`, `version` | Verifies token, manifest, tool config, and paths |
+
+Supported AI tools:
+- `cursor`
+- `cline`
+- `windsurf`
+- `continue`
+- `copilot`
+- `claude`
+- `codex`
+
 ## Installation
 
 ### Option 1: Download and install prebuilt packages
@@ -135,11 +157,41 @@ go test ./internal/scan -v
 | Auth | `auth login`, `auth whoami`, `auth logout` |
 | Search | `items search`, `org list` |
 | Repo analysis | `scan [path]`, `suggest [--path <dir>] [--type rule\|skill]` |
-| Install lifecycle | `add @rule/<slug>\|@skill/<slug>`, `list`, `remove <ref>`, `sync` |
+| Install lifecycle | `add @rule/<slug>\|@skill/<slug> [--tool <name>] [--dry-run]`, `list [--installed]`, `remove <ref>`, `sync [--dry-run]` |
 | Tool settings | `tool list`, `tool current`, `tool set <name>` |
 | Diagnostics | `doctor`, `version` |
 
 Run `codemint <command> --help` for full usage and flags.
+
+## Common Workflows
+
+Scan a repository and get recommendations:
+
+```bash
+codemint scan .
+codemint suggest --path . --type rule
+```
+
+Set default tool and install a rule/skill:
+
+```bash
+codemint tool set cursor
+codemint add @rule/safe-api-route-pattern
+codemint add @skill/typescript-node
+```
+
+Preview and apply updates from catalog:
+
+```bash
+codemint sync --dry-run
+codemint sync
+```
+
+Run health checks:
+
+```bash
+codemint doctor
+```
 
 ## Global Flags
 

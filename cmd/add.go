@@ -47,14 +47,17 @@ func newAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			var existing manifest.Item
+			hasExisting := false
 			if idx, ok := manifest.FindByCatalogID(mf.Installed, item.CatalogID); ok {
-				ex := mf.Installed[idx]
-				if ex.Version == item.Version {
-					msg := map[string]any{"status": "unchanged", "ref": ex.Ref, "version": ex.Version, "tool": ex.Tool}
+				hasExisting = true
+				existing = mf.Installed[idx]
+				if existing.Version == item.Version && existing.Tool == tool {
+					msg := map[string]any{"status": "unchanged", "ref": existing.Ref, "version": existing.Version, "tool": existing.Tool}
 					if ctx.Mode == output.ModeJSON {
 						return output.PrintJSON(msg)
 					}
-					fmt.Printf("Already installed %s@%s\n", ex.Ref, ex.Version)
+					fmt.Printf("Already installed %s@%s\n", existing.Ref, existing.Version)
 					return nil
 				}
 			}
@@ -71,6 +74,17 @@ func newAddCmd() *cobra.Command {
 			installed, err := mgr.Install(*item, tool)
 			if err != nil {
 				return err
+			}
+			if hasExisting {
+				oldPath := existing.Path
+				if oldPath == "" {
+					oldPath = mgr.ItemPath(existing.Tool, existing.Type, existing.Slug)
+				}
+				if oldPath != "" && oldPath != installed.Path {
+					if _, err := mgr.RemovePath(oldPath); err != nil {
+						return err
+					}
+				}
 			}
 			entry := manifest.Item{
 				CatalogID:   item.CatalogID,

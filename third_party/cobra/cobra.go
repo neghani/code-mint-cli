@@ -204,7 +204,7 @@ func (f *FlagSet) StringSliceVar(p *[]string, name string, value []string, usage
 }
 
 func (f *FlagSet) parse(args []string) error {
-	return f.fs.Parse(args)
+	return f.fs.Parse(normalizeInterspersedArgs(f.fs, args))
 }
 
 func (f *FlagSet) args() []string {
@@ -242,4 +242,59 @@ func wantsHelp(args []string) bool {
 		}
 	}
 	return false
+}
+
+func normalizeInterspersedArgs(fs *flag.FlagSet, args []string) []string {
+	if len(args) < 2 {
+		return args
+	}
+	flags := make([]string, 0, len(args))
+	positionals := make([]string, 0, len(args))
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			positionals = append(positionals, args[i+1:]...)
+			break
+		}
+		if !isFlagToken(arg) {
+			positionals = append(positionals, arg)
+			continue
+		}
+
+		flags = append(flags, arg)
+		name, hasInlineValue := flagName(arg)
+		fl := fs.Lookup(name)
+		if fl == nil || hasInlineValue || isBoolFlag(fl) {
+			continue
+		}
+		if i+1 < len(args) {
+			flags = append(flags, args[i+1])
+			i++
+		}
+	}
+	return append(flags, positionals...)
+}
+
+func isFlagToken(arg string) bool {
+	return len(arg) > 1 && strings.HasPrefix(arg, "-")
+}
+
+func flagName(arg string) (string, bool) {
+	trimmed := strings.TrimLeft(arg, "-")
+	if idx := strings.Index(trimmed, "="); idx >= 0 {
+		return trimmed[:idx], true
+	}
+	return trimmed, false
+}
+
+func isBoolFlag(fl *flag.Flag) bool {
+	if fl == nil {
+		return false
+	}
+	type boolFlag interface {
+		IsBoolFlag() bool
+	}
+	bf, ok := fl.Value.(boolFlag)
+	return ok && bf.IsBoolFlag()
 }
