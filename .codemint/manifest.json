@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "installed": [
+    {
+      "catalogId": "rule:safe-api-route-pattern",
+      "ref": "@rule/safe-api-route-pattern",
+      "type": "rule",
+      "slug": "safe-api-route-pattern",
+      "version": "0.0.0",
+      "checksum": "71720d2b1f2f1e402e168f30555c79593bc6d65624d8e08b072e74b71b2c5d8a",
+      "installedAt": "2026-02-15T10:25:32.804551Z",
+      "path": "/Users/ganeshkumar/Projects/code-mint-ali-cli/.codemint/rules/safe-api-route-pattern.md"
+    }
+  ]
+}

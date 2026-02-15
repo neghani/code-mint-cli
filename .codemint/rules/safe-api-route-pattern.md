@@ -1,0 +1,1 @@
+Always validate input with Zod. Use parameterized queries. Never trust client data.
