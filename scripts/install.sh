@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REPO="${CODEMINT_REPO:-codemint/codemint-cli}"
+REPO="${CODEMINT_REPO:-neghani/code-mint-cli}"
 BINARY="${CODEMINT_BINARY:-codemint}"
 INSTALL_DIR="${CODEMINT_INSTALL_DIR:-/usr/local/bin}"
 VERSION="${CODEMINT_VERSION:-${1:-latest}}"
