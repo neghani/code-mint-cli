@@ -28,4 +28,6 @@ release-dry-run:
 	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o dist/$(BINARY).exe
 	(cd dist && zip $(BINARY)_$(VERSION)_windows_amd64.zip $(BINARY).exe)
 	rm -f dist/$(BINARY) dist/$(BINARY).exe
+	cp scripts/install.sh dist/install.sh
+	chmod +x dist/install.sh
 	./scripts/checksums.sh dist "$(BINARY)_$(VERSION)_*"

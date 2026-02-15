@@ -25,6 +25,7 @@ files=(
   "${DIST_DIR}/codemint_${VERSION}_linux_amd64.tar.gz"
   "${DIST_DIR}/codemint_${VERSION}_windows_amd64.zip"
   "${DIST_DIR}/SHA256SUMS"
+  "${DIST_DIR}/install.sh"
 )
 
 for f in "${files[@]}"; do

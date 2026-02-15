@@ -4,6 +4,18 @@
 
 Download a package from GitHub Releases and install it.
 
+### Fast install (latest release, macOS/Linux)
+
+```bash
+curl -fsSL https://github.com/codemint/codemint-cli/releases/latest/download/install.sh | sh
+```
+
+If you publish from your own repo/fork, use that release URL instead:
+
+```bash
+curl -fsSL https://github.com/neghani/code-mint-cli/releases/latest/download/install.sh | CODEMINT_REPO=neghani/code-mint-cli sh
+```
+
 ### Linux amd64
 
 ```bash
