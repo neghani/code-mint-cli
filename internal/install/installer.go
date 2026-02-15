@@ -27,6 +27,9 @@ func NewManager(root string) *Manager {
 func (m *Manager) ItemDir(tool, itemType string) string {
 	switch tool {
 	case tooling.ToolCursor:
+		if itemType == "skill" {
+			return filepath.Join(m.Root, ".cursor", "skills")
+		}
 		return filepath.Join(m.Root, ".cursor", "rules")
 	case tooling.ToolCline:
 		if itemType == "skill" {
@@ -53,10 +56,10 @@ func (m *Manager) ItemPath(tool, itemType, slug string) string {
 	name := slug
 	switch tool {
 	case tooling.ToolCursor:
-		ext = ".mdc"
 		if itemType == "skill" {
-			name = "skill-" + slug
+			return filepath.Join(m.ItemDir(tool, itemType), slug, "SKILL.md")
 		}
+		ext = ".mdc"
 	case tooling.ToolCopilot:
 		ext = ".instructions.md"
 		if itemType == "skill" {

@@ -159,11 +159,19 @@ func (c *Client) CatalogSync(ctx context.Context, token string, req CatalogSyncR
 }
 
 func (c *Client) OrgList(ctx context.Context, token string) (*OrgListResponse, error) {
-	var out OrgListResponse
-	if err := c.do(ctx, http.MethodGet, "/api/org/my", token, nil, &out); err != nil {
+	var raw json.RawMessage
+	if err := c.do(ctx, http.MethodGet, "/api/org/my", token, nil, &raw); err != nil {
 		return nil, err
 	}
-	return &out, nil
+	var arrayOut []Organization
+	if err := json.Unmarshal(raw, &arrayOut); err == nil {
+		return &OrgListResponse{Organizations: arrayOut}, nil
+	}
+	var wrapped OrgListResponse
+	if err := json.Unmarshal(raw, &wrapped); err == nil {
+		return &wrapped, nil
+	}
+	return nil, fmt.Errorf("decode org list response: unexpected payload shape")
 }
 
 func (c *Client) do(ctx context.Context, method, path, token string, in any, out any) error {

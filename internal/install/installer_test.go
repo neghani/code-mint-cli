@@ -16,6 +16,7 @@ func TestItemPathByTool(t *testing.T) {
 		expect   string
 	}{
 		{tooling.ToolCursor, "rule", "react-best", filepath.Join("/repo", ".cursor", "rules", "react-best.mdc")},
+		{tooling.ToolCursor, "skill", "node-js", filepath.Join("/repo", ".cursor", "skills", "node-js", "SKILL.md")},
 		{tooling.ToolCline, "rule", "safe-api", filepath.Join("/repo", ".clinerules", "safe-api.md")},
 		{tooling.ToolCline, "skill", "node-js", filepath.Join("/repo", ".cline", "skills", "node-js", "SKILL.md")},
 		{tooling.ToolCopilot, "rule", "secure", filepath.Join("/repo", ".github", "instructions", "secure.instructions.md")},
