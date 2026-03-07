@@ -112,7 +112,7 @@ func (c *Client) CatalogGetByRef(ctx context.Context, token string, itemType, sl
 
 func (c *Client) CatalogSync(ctx context.Context, token string, req CatalogSyncRequest) (*CatalogSyncResponse, error) {
 	const maxBatch = 100
-	apiItems := make([]*CatalogItem, 0, len(req.Items))
+	remoteMap := make(map[string]*CatalogItem)
 	for start := 0; start < len(req.Items); start += maxBatch {
 		end := start + maxBatch
 		if end > len(req.Items) {
@@ -126,15 +126,16 @@ func (c *Client) CatalogSync(ctx context.Context, token string, req CatalogSyncR
 		if err := c.do(ctx, http.MethodPost, "/api/catalog/sync", token, map[string]any{"catalogIds": ids}, &apiOut); err != nil {
 			return nil, err
 		}
-		apiItems = append(apiItems, apiOut.Items...)
+		for _, item := range apiOut.Items {
+			if item != nil && item.CatalogID != "" {
+				remoteMap[item.CatalogID] = item
+			}
+		}
 	}
 
 	results := make([]CatalogSyncResult, 0, len(req.Items))
-	for i, local := range req.Items {
-		var remote *CatalogItem
-		if i < len(apiItems) {
-			remote = apiItems[i]
-		}
+	for _, local := range req.Items {
+		remote := remoteMap[local.CatalogID]
 		if remote == nil {
 			results = append(results, CatalogSyncResult{
 				CatalogID:      local.CatalogID,
@@ -210,9 +211,9 @@ func (c *Client) do(ctx context.Context, method, path, token string, in any, out
 			}
 			return err
 		}
-		defer resp.Body.Close()
 		if resp.StatusCode >= 400 {
 			b, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
 			aerr := parseAPIError(resp.StatusCode, b)
 			if resp.StatusCode >= 500 && attempt < retries {
 				time.Sleep(time.Duration(attempt+1) * 200 * time.Millisecond)
@@ -222,9 +223,12 @@ func (c *Client) do(ctx context.Context, method, path, token string, in any, out
 			return aerr
 		}
 		if out == nil {
+			_ = resp.Body.Close()
 			return nil
 		}
-		return json.NewDecoder(resp.Body).Decode(out)
+		err = json.NewDecoder(resp.Body).Decode(out)
+		_ = resp.Body.Close()
+		return err
 	}
 	return lastErr
 }
@@ -252,7 +256,7 @@ func parseAPIError(status int, b []byte) error {
 
 func transient(err error) bool {
 	if nerr, ok := err.(net.Error); ok {
-		return nerr.Timeout() || nerr.Temporary()
+		return nerr.Timeout()
 	}
 	return false
 }

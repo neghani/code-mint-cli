@@ -139,7 +139,7 @@ func defaultContent(item api.CatalogItem) string {
 }
 
 func renderForTool(tool string, item api.CatalogItem, content string) string {
-	if tool != tooling.ToolCursor {
+	if tool != tooling.ToolCursor || item.Type != "rule" {
 		return content
 	}
 	if strings.HasPrefix(strings.TrimSpace(content), "---") {

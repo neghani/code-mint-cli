@@ -50,13 +50,17 @@ func Login(ctx context.Context, opts LoginOptions) (*LoginResult, error) {
 		_ = opts.Store.Delete(ctx)
 		return nil, fmt.Errorf("token verification failed. run `codemint auth login` again: %w", err)
 	}
+	if me != nil && me.ID == "" {
+		_ = opts.Store.Delete(ctx)
+		return nil, fmt.Errorf("token verification failed: empty user. run `codemint auth login` again")
+	}
 
 	return &LoginResult{Email: me.Email}, nil
 }
 
 func trimBaseURL(raw string) string {
 	u, err := url.Parse(raw)
-	if err != nil || u.String() == "" {
+	if err != nil || u.Host == "" {
 		return raw
 	}
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host)

@@ -73,29 +73,33 @@ func newSyncCmd() *cobra.Command {
 					up.Checksum = result.LatestItem.Checksum
 				}
 				plan.Upgrade = append(plan.Upgrade, up)
-				if dryRun {
-					continue
-				}
-				tool := local.Tool
-				if tool == "" {
-					tool = settings.AITool
-				}
-				installed, err := mgr.Install(result.LatestItem, tool)
-				if err != nil {
-					return err
-				}
-				up.Path = installed.Path
-				up.Tool = tool
-				if up.Checksum == "" {
-					up.Checksum = installed.Checksum
-				}
-				up.Ref = catalog.NormalizeRef(local.Type, local.Slug)
-				up.InstalledAt = time.Now().UTC()
-				if idx, ok := manifest.FindByCatalogID(mf.Installed, local.CatalogID); ok {
-					mf.Installed[idx] = up
-				}
 			}
 			if !dryRun {
+				for _, up := range plan.Upgrade {
+					result := lookupSync(up.CatalogID, resp.Results)
+					if result == nil {
+						continue
+					}
+					tool := up.Tool
+					if tool == "" {
+						tool = settings.AITool
+					}
+					installed, err := mgr.Install(result.LatestItem, tool)
+					if err != nil {
+						_, _ = fmt.Fprintf(os.Stderr, "sync: skip %s: %v\n", up.Slug, err)
+						continue
+					}
+					up.Path = installed.Path
+					up.Tool = tool
+					if up.Checksum == "" {
+						up.Checksum = installed.Checksum
+					}
+					up.Ref = catalog.NormalizeRef(up.Type, up.Slug)
+					up.InstalledAt = time.Now().UTC()
+					if idx, ok := manifest.FindByCatalogID(mf.Installed, up.CatalogID); ok {
+						mf.Installed[idx] = up
+					}
+				}
 				if err := store.Save(mf); err != nil {
 					return err
 				}

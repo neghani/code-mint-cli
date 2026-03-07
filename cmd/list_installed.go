@@ -10,7 +10,6 @@ import (
 )
 
 func newListCmd() *cobra.Command {
-	var installedOnly bool
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List local codemint installs",
@@ -23,12 +22,10 @@ func newListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if !installedOnly {
-				if ctx.Mode == output.ModeJSON {
-					return output.PrintJSON(mf)
-				}
-			}
 			if len(mf.Installed) == 0 {
+				if ctx.Mode == output.ModeJSON {
+					return output.PrintJSON(mf.Installed)
+				}
 				fmt.Println("No installed items")
 				return nil
 			}
@@ -42,6 +39,5 @@ func newListCmd() *cobra.Command {
 			return output.PrintTable([]string{"Item", "Tool", "Version", "Catalog ID", "Path"}, rows)
 		},
 	}
-	cmd.Flags().BoolVar(&installedOnly, "installed", false, "show installed items")
 	return cmd
 }

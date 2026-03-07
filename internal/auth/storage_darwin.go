@@ -4,6 +4,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -30,6 +31,10 @@ func (d *darwinStore) Get(_ context.Context) (string, error) {
 	cmd := exec.Command("security", "find-generic-password", "-a", d.account, "-s", d.service, "-w")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 44 {
+			return "", ErrNotLoggedIn
+		}
 		return "", fmt.Errorf("read macOS keychain token: %s", strings.TrimSpace(string(out)))
 	}
 	return strings.TrimSpace(string(out)), nil
@@ -37,6 +42,8 @@ func (d *darwinStore) Get(_ context.Context) (string, error) {
 
 func (d *darwinStore) Delete(_ context.Context) error {
 	cmd := exec.Command("security", "delete-generic-password", "-a", d.account, "-s", d.service)
-	_, _ = cmd.CombinedOutput()
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("delete macOS keychain token: %s", strings.TrimSpace(string(out)))
+	}
 	return nil
 }

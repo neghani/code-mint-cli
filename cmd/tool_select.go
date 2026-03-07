@@ -16,14 +16,6 @@ func resolveAITool(store *manifest.Store, override string, nonInteractive bool) 
 		if err := tooling.Validate(override); err != nil {
 			return "", err
 		}
-		settings, err := store.LoadSettings()
-		if err != nil {
-			return "", err
-		}
-		settings.AITool = override
-		if err := store.SaveSettings(settings); err != nil {
-			return "", err
-		}
 		return override, nil
 	}
 

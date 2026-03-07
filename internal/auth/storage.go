@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 )
 
+// ErrNotLoggedIn is returned when no stored token exists (e.g. keychain item not found).
+var ErrNotLoggedIn = errors.New("not logged in")
+
 type TokenStore interface {
 	Set(ctx context.Context, token string) error
 	Get(ctx context.Context) (string, error)

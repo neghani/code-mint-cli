@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/codemint/codemint-cli/internal/api"
@@ -96,8 +98,14 @@ func rootContext() context.Context {
 }
 
 func tokenFromStore() (string, error) {
+	if env := os.Getenv("CODEMINT_TOKEN"); strings.TrimSpace(env) != "" {
+		return strings.TrimSpace(env), nil
+	}
 	tok, err := ctx.Store.Get(rootContext())
 	if err != nil {
+		if errors.Is(err, auth.ErrNotLoggedIn) {
+			return "", fmt.Errorf("not logged in: run `codemint auth login`")
+		}
 		return "", fmt.Errorf("not logged in. run `codemint auth login`: %w", err)
 	}
 	return tok, nil
