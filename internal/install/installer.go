@@ -96,6 +96,9 @@ func (m *Manager) Install(item api.CatalogItem, tool string) (InstallResult, err
 	if item.Type != "rule" && item.Type != "skill" {
 		return InstallResult{}, fmt.Errorf("unsupported item type: %s", item.Type)
 	}
+	if item.Slug == "" {
+		return InstallResult{}, fmt.Errorf("item slug cannot be empty")
+	}
 	if tool == "" {
 		tool = tooling.ToolCodeMint
 	}
@@ -145,7 +148,18 @@ func renderForTool(tool string, item api.CatalogItem, content string) string {
 	if strings.HasPrefix(strings.TrimSpace(content), "---") {
 		return content
 	}
-	return fmt.Sprintf("---\ndescription: %s\nalwaysApply: false\n---\n\n%s\n", safeTitle(item), content)
+	alwaysApply := item.ApplyMode == "always"
+	var sb strings.Builder
+	sb.WriteString("---\n")
+	sb.WriteString(fmt.Sprintf("description: %s\n", safeTitle(item)))
+	sb.WriteString(fmt.Sprintf("alwaysApply: %v\n", alwaysApply))
+	if item.ApplyMode == "glob" && item.Globs != "" {
+		sb.WriteString(fmt.Sprintf("globs: %s\n", item.Globs))
+	}
+	sb.WriteString("---\n\n")
+	sb.WriteString(content)
+	sb.WriteString("\n")
+	return sb.String()
 }
 
 func safeTitle(item api.CatalogItem) string {
@@ -155,5 +169,8 @@ func safeTitle(item api.CatalogItem) string {
 	if item.Name != "" {
 		return item.Name
 	}
-	return item.Slug
+	if item.Slug != "" {
+		return item.Slug
+	}
+	return "Untitled"
 }

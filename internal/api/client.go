@@ -93,8 +93,8 @@ func (c *Client) CatalogSuggest(ctx context.Context, token string, req CatalogLo
 	if err != nil {
 		return nil, err
 	}
-	out := make([]CatalogItem, 0, len(resp.Items))
-	for _, it := range resp.Items {
+	out := make([]CatalogItem, 0, len(resp.Data))
+	for _, it := range resp.Data {
 		out = append(out, itemToCatalog(it))
 	}
 	return out, nil
@@ -234,24 +234,30 @@ func (c *Client) do(ctx context.Context, method, path, token string, in any, out
 }
 
 func parseAPIError(status int, b []byte) error {
+	appendAuthHint := func(m string) string {
+		if status == 401 || status == 403 {
+			return m + " — run 'codemint auth login' to re-authenticate"
+		}
+		return m
+	}
 	var env ErrorEnvelope
 	if err := json.Unmarshal(b, &env); err == nil && env.Error.Message != "" {
-		return &APIError{Status: status, Code: env.Error.Code, Message: env.Error.Message}
+		return &APIError{Status: status, Code: env.Error.Code, Message: appendAuthHint(env.Error.Message)}
 	}
 	var flat map[string]any
 	if err := json.Unmarshal(b, &flat); err == nil {
 		if msg, ok := flat["error"].(string); ok && msg != "" {
-			return &APIError{Status: status, Message: msg}
+			return &APIError{Status: status, Message: appendAuthHint(msg)}
 		}
 		if msg, ok := flat["message"].(string); ok && msg != "" {
-			return &APIError{Status: status, Message: msg}
+			return &APIError{Status: status, Message: appendAuthHint(msg)}
 		}
 	}
 	msg := strings.TrimSpace(string(b))
 	if msg == "" {
 		msg = http.StatusText(status)
 	}
-	return &APIError{Status: status, Message: msg}
+	return &APIError{Status: status, Message: appendAuthHint(msg)}
 }
 
 func transient(err error) bool {
@@ -301,6 +307,14 @@ func itemToCatalog(it Item) CatalogItem {
 	if catalogID == "" {
 		catalogID = it.Type + ":" + slug
 	}
+	applyMode := it.ApplyMode
+	if applyMode == "" {
+		applyMode = strMeta(it.Metadata, "applyMode")
+	}
+	globs := it.Globs
+	if globs == "" {
+		globs = strMeta(it.Metadata, "globs")
+	}
 	return CatalogItem{
 		ID:         it.ID,
 		Title:      it.Title,
@@ -316,6 +330,8 @@ func itemToCatalog(it Item) CatalogItem {
 		Changelog:  strMeta(it.Metadata, "changelog"),
 		Content:    content,
 		Metadata:   it.Metadata,
+		ApplyMode:  applyMode,
+		Globs:      globs,
 	}
 }
 
@@ -335,6 +351,9 @@ func normalizeCatalogItem(it *CatalogItem) {
 	if it.Version == "" {
 		it.Version = "0.0.0"
 		it.CatVer = "0.0.0"
+	}
+	if it.ApplyMode == "" {
+		it.ApplyMode = "auto"
 	}
 }
 

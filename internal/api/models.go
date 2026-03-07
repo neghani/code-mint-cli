@@ -26,6 +26,8 @@ type Item struct {
 	Score     int                    `json:"score"`
 	Metadata  map[string]any         `json:"metadata,omitempty"`
 	Content   string                 `json:"content,omitempty"`
+	ApplyMode string                 `json:"applyMode,omitempty"`
+	Globs     string                 `json:"globs,omitempty"`
 	UpdatedAt string                 `json:"updatedAt,omitempty"`
 	CreatedAt string                 `json:"createdAt,omitempty"`
 	Extra     map[string]interface{} `json:"-"`
@@ -42,7 +44,7 @@ type ItemsSearchRequest struct {
 }
 
 type ItemsSearchResponse struct {
-	Items []Item `json:"items"`
+	Data  []Item `json:"data"`
 	Page  int    `json:"page"`
 	Limit int    `json:"limit"`
 	Total int    `json:"total"`
@@ -63,6 +65,8 @@ type CatalogItem struct {
 	Changelog  string         `json:"changelog,omitempty"`
 	Content    string         `json:"content,omitempty"`
 	Metadata   map[string]any `json:"metadata,omitempty"`
+	ApplyMode  string         `json:"applyMode,omitempty"` // always|auto|glob|manual
+	Globs      string         `json:"globs,omitempty"`
 }
 
 type CatalogLookupRequest struct {

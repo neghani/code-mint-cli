@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -38,9 +39,17 @@ func newItemsSearchCmd() *cobra.Command {
 				return output.PrintJSON(resp)
 			}
 
-			rows := make([][]string, 0, len(resp.Items))
-			for _, it := range resp.Items {
-				rows = append(rows, []string{it.ID, it.Name, it.Type, strings.Join(it.Tags, ","), strconv.Itoa(it.Score)})
+			rows := make([][]string, 0, len(resp.Data))
+			for _, it := range resp.Data {
+				name := it.Name
+				if name == "" {
+					name = it.Title
+				}
+				rows = append(rows, []string{it.ID, name, it.Type, strings.Join(it.Tags, ","), strconv.Itoa(it.Score)})
+			}
+			if len(rows) == 0 {
+				fmt.Println("No results found.")
+				return nil
 			}
 			return output.PrintTable([]string{"ID", "Name", "Type", "Tags", "Score"}, rows)
 		},
